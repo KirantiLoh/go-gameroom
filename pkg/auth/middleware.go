@@ -20,9 +20,10 @@ func JWTMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		claims, err := DecodeJWT(strings.Trim(authToken, "Bearer "))
+		claims, err := DecodeJWT(strings.TrimPrefix(authToken, "Bearer "))
 
 		if err != nil {
+      println(err.Error())
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
 				"message": "Unauthorized",

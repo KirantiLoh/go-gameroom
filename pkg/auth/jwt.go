@@ -25,16 +25,26 @@ func EncodeJWT(user UserData) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   string(user.ID),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)), // specify duration clearly
 		},
 	}
+	secret := []byte(os.Getenv("JWT_SECRET"))
+	if len(secret) == 0 {
+		return "", errors.New("JWT_SECRET environment variable is not set")
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return token.SignedString(secret)
 }
 
 func DecodeJWT(tokenString string) (*Claims, error) {
+
+	secret := []byte(os.Getenv("JWT_SECRET"))
+	if len(secret) == 0 {
+		return nil, errors.New("JWT_SECRET environment variable is not set")
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-		return os.Getenv("JWT_SECRET"), nil
+		return secret, nil // returning the secret as []byte
 	})
 
 	if err != nil {
@@ -45,5 +55,5 @@ func DecodeJWT(tokenString string) (*Claims, error) {
 		return claims, nil
 	}
 
-	return nil, errors.New("Invalid token")
+	return nil, errors.New("invalid token")
 }
